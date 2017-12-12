@@ -45,7 +45,11 @@ def get_task_list():
     relnewResult = []
     for project_id in project_ids:
         sql = 'select * from case_list where project_id = %s'
-        dbc.execute(sql, (project_id,))
+        #mysqldb版本兼容
+        try:
+            dbc.execute(sql, (project_id))
+        except:
+            dbc.execute(sql, (project_id,))
         sz = dbc.fetchall()
         def getchild(pid):
             result = []
@@ -150,3 +154,36 @@ def upload():
         response = cors_response({'code': 10001, 'msg': '上传失败'})
         return response
 
+@app.route('/settaskstatus', methods=['GET', 'POST'])
+def settaskstatus():
+    if request.values.get("entry"):
+        entry = request.values.get("entry")
+        status = request.values.get("status")
+        if entry.isdigit() == False:
+            response = cors_response({'code': 10002, 'msg': '呵呵呵呵呵呵呵呵'})
+            return response
+    else:
+        response = cors_response({'code': 10002, 'msg': '未获取到行数据'})
+        return response
+
+    # 入库
+    db = MySQLdb.connect(database_host,database_username,database_password,database1)
+    dbc = db.cursor()
+    # 编码问题
+    db.set_character_set('utf8')
+    dbc.execute('SET NAMES utf8;')
+    dbc.execute('SET CHARACTER SET utf8;')
+    dbc.execute('SET character_set_connection=utf8;')
+    sql = 'update case_list set status = %s where entry = %s'
+    state = dbc.execute(sql,(status,entry))
+    db.commit()
+    if state:
+        dbc.close()
+        db.close()
+        response = cors_response({'code': 0, 'msg': '成功'})
+        return response
+    else:
+        dbc.close()
+        db.close()
+        response = cors_response({'code': 10001, 'msg': '更新更新失败'})
+        return response
