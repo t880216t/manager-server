@@ -8,4 +8,4 @@ def run_listen():
 if __name__ == '__main__':
     t3 = Thread(target=run_listen)
     t3.start()
-    app.run()
+    app.run(host='0.0.0.0', debug=True, threaded=True)
