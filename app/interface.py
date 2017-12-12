@@ -70,6 +70,43 @@ def addInterface():
         db.close()
         return response
 
+@app.route('/addprojectkey', methods=['POST'])
+def addprojectkey():
+    project_key = request.values.get("project_key")
+    create_user = request.values.get("create_user")
+    # 入库
+    db = MySQLdb.connect(database_host,database_username,database_password,database1)
+    dbc = db.cursor()
+    # 编码问题
+    db.set_character_set('utf8')
+    dbc.execute('SET NAMES utf8;')
+    dbc.execute('SET CHARACTER SET utf8;')
+    dbc.execute('SET character_set_connection=utf8;')
+    verif_sql = 'select * from project_list WHERE project_key = %s'
+    dbc.execute(verif_sql, (project_key,))
+    verif_list = dbc.fetchall()
+    if len(verif_list) > 0:
+        dbc.close()
+        db.close()
+        response = cors_response({"code": 10001, "msg": "项目名称重复，"})
+        return response
+
+    sql = 'insert into project_list (project_key,create_user) VALUES (%s,%s)'
+    state = dbc.execute(sql, (project_key,create_user))
+
+    if state:
+        db.commit()
+        response = cors_response({'code': 0, 'msg': '插入成功'})
+        dbc.close()
+        db.close()
+        return response
+    else:
+        db.commit()
+        response = cors_response({'code': 10001, 'msg': '插入失败'})
+        dbc.close()
+        db.close()
+        return response
+
 @app.route('/updateInterface', methods=['POST'])
 def updateInterface():
     # 获取上传参数 rowID,rowData,userID,
@@ -198,6 +235,38 @@ def interfaceList():
                        "create_time": obj[12].strftime('%Y-%m-%d %H:%M:%S'),
                        "project": obj[13],
                        "datatype": obj[14],
+                       })
+    response = cors_response({"code": 0, "content": result})
+    dbc.close()
+    db.close()
+    return response
+
+@app.route('/projectList', methods=['POST'])
+def projectList():
+    userName = request.values.get("userName")
+    # 连接
+    db = MySQLdb.connect(database_host,database_username,database_password,database1)
+    dbc = db.cursor()
+    # 编码问题
+    db.set_character_set('utf8')
+    dbc.execute('SET NAMES utf8;')
+    dbc.execute('SET CHARACTER SET utf8;')
+    dbc.execute('SET character_set_connection=utf8;')
+    sql = 'select * from project_list order by create_time asc'
+    dbc.execute(sql)
+    list = dbc.fetchall()
+    if len(list) == 0:
+        dbc.close()
+        db.close()
+        response = cors_response({"code": 10001, "msg": "还没有项目"})
+        return response
+    db.commit()
+    result = []
+    for obj in list:
+        result.append({"entry": obj[0],
+                       "project_key": obj[1],
+                       "create_user": obj[2],
+                       "create_time": obj[3],
                        })
     response = cors_response({"code": 0, "content": result})
     dbc.close()
