@@ -58,8 +58,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/uploadfile', methods=['POST'])
+def uploadfile():
     upload_file = request.files["file"]
     if upload_file and allowed_file(upload_file.filename):
         filename = secure_filename(upload_file.filename)

@@ -79,6 +79,44 @@ def get_task_list():
     db.close()
     return response
 
+@app.route('/addcase', methods=['GET', 'POST'])
+def addcase():
+    entry = request.values.get("entry")
+    title = request.values.get("newCase")
+    # 连接
+    db = MySQLdb.connect(database_host,database_username,database_password,database1)
+    dbc = db.cursor()
+    # 编码问题
+    db.set_character_set('utf8')
+    dbc.execute('SET NAMES utf8;')
+    dbc.execute('SET CHARACTER SET utf8;')
+    dbc.execute('SET character_set_connection=utf8;')
+
+    need_value_sql = 'select * from case_list WHERE entry = %s' % entry
+    dbc.execute(need_value_sql)
+    list = dbc.fetchone()
+    pid = list[0]
+    user_id = list[3]
+    project_id = list[6]
+    id_sql = "select max(id) from case_list where case_list.project_id = %s"
+    dbc.execute(id_sql,(project_id,))
+    ids = dbc.fetchone()
+    id = ids[0]+1
+
+    sql = 'insert into case_list (id,title,pid,user_id,status,project_id) VALUES (%s,%s,%s,%s,%s,%s)'
+    state = dbc.execute(sql, (id,title,pid,user_id,0,project_id))
+    if state:
+        db.commit()
+        dbc.close()
+        db.close()
+        response = cors_response({'code': 0, 'msg': '新建成功'})
+        return response
+    else:
+        db.commit()
+        dbc.close()
+        db.close()
+        response = cors_response({'code': 10001, 'msg': '新建失败'})
+        return response
 
 from werkzeug.utils import secure_filename
 import os
@@ -177,6 +215,22 @@ def settaskstatus():
     sql = 'update case_list set status = %s where entry = %s'
     state = dbc.execute(sql,(status,entry))
     db.commit()
+    if status == 2:
+        need_value_sql = 'select * from case_list WHERE entry = %s' % entry
+        dbc.execute(need_value_sql)
+        list = dbc.fetchone()
+        pid = list[2]
+        project_id = list[6]
+        def updateFather(id):
+            fasql = 'update case_list set status = 2 where id = %s and project_id = %s'
+            dbc.execute(fasql,(id,project_id))
+            db.commit()
+            se_fasql = 'select * from case_list where id = %s and project_id = %s'
+            dbc.execute(se_fasql, (id, project_id))
+            se_list = dbc.fetchone()
+            if se_list[2] != 0:
+                updateFather(se_list[0])
+        updateFather(pid)
     if state:
         dbc.close()
         db.close()
@@ -186,4 +240,31 @@ def settaskstatus():
         dbc.close()
         db.close()
         response = cors_response({'code': 10001, 'msg': '更新更新失败'})
+        return response
+
+@app.route('/deletecase', methods=['GET', 'POST'])
+def deletecase():
+    entry = request.values.get("entry")
+    # 入库
+    db = MySQLdb.connect(database_host,database_username,database_password,database1)
+    dbc = db.cursor()
+    # 编码问题
+    db.set_character_set('utf8')
+    dbc.execute('SET NAMES utf8;')
+    dbc.execute('SET CHARACTER SET utf8;')
+    dbc.execute('SET character_set_connection=utf8;')
+
+    sql = 'delete from case_list where entry = %s' % entry
+    state = dbc.execute(sql)
+    db.commit()
+
+    if state:
+        dbc.close()
+        db.close()
+        response = cors_response({'code': 0, 'msg': '删除成功'})
+        return response
+    else:
+        dbc.close()
+        db.close()
+        response = cors_response({'code': 10001, 'msg': '删除失败'})
         return response
