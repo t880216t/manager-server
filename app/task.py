@@ -215,7 +215,7 @@ def settaskstatus():
     sql = 'update case_list set status = %s where entry = %s'
     state = dbc.execute(sql,(status,entry))
     db.commit()
-    if status == 2:
+    if status == u'2':
         need_value_sql = 'select * from case_list WHERE entry = %s' % entry
         dbc.execute(need_value_sql)
         list = dbc.fetchone()
@@ -229,7 +229,7 @@ def settaskstatus():
             dbc.execute(se_fasql, (id, project_id))
             se_list = dbc.fetchone()
             if se_list[2] != 0:
-                updateFather(se_list[0])
+                updateFather(se_list[2])
         updateFather(pid)
     if state:
         dbc.close()
