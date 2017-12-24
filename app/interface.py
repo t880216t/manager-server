@@ -33,6 +33,7 @@ def addInterface():
     test_description = request.values.get("test_description")
     project = request.values.get("project")
     datatype = request.values.get("datatype")
+    verif_parms = request.values.get("verif_parms")
 
     # 入库
     db = MySQLdb.connect(database_host,database_username,database_password,database1)
@@ -51,11 +52,11 @@ def addInterface():
         response = cors_response({"code": 10001, "msg": "用例名称重复，"})
         return response
 
-    sql = 'insert into interface_list (test_name, path, method, parms,verif_code,need_save_response,need_verif_value,verif_key,verif_value_from_file,verif_value,test_description,project,datatype) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+    sql = 'insert into interface_list (test_name, path, method, parms,verif_code,need_save_response,need_verif_value,verif_key,verif_value_from_file,verif_value,test_description,project,datatype,verif_parms) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
     state = dbc.execute(sql, (
         test_name, path, method, parms, verif_code, need_save_response, need_verif_value, verif_key,
         verif_value_from_file,
-        verif_value,test_description,project,datatype))
+        verif_value,test_description,project,datatype,verif_parms))
 
     if state:
         db.commit()
@@ -124,6 +125,7 @@ def updateInterface():
     test_description = request.values.get("test_description")
     project = request.values.get("project")
     datatype = request.values.get("datatype")
+    verif_parms = request.values.get("verif_parms")
     # 入库
     db = MySQLdb.connect(database_host,database_username,database_password,database1)
     dbc = db.cursor()
@@ -141,8 +143,8 @@ def updateInterface():
             db.close()
             response = cors_response({"code": 10001, "msg": "用例名称重复，"})
             return response
-    sql = 'update interface_list set test_name = %s, path = %s, method = %s, parms = %s,verif_code = %s,need_save_response = %s,need_verif_value = %s,verif_key = %s,verif_value_from_file = %s,verif_value = %s,test_description = %s ,project = %s ,datatype=%s where entry = %s'
-    state = dbc.execute(sql, (test_name, path, method, parms, verif_code, need_save_response, need_verif_value, verif_key,verif_value_from_file,verif_value,test_description,project,datatype,entry))
+    sql = 'update interface_list set test_name = %s, path = %s, method = %s, parms = %s,verif_code = %s,need_save_response = %s,need_verif_value = %s,verif_key = %s,verif_value_from_file = %s,verif_value = %s,test_description = %s ,project = %s ,datatype=%s ,verif_parms=%s where entry = %s'
+    state = dbc.execute(sql, (test_name, path, method, parms, verif_code, need_save_response, need_verif_value, verif_key,verif_value_from_file,verif_value,test_description,project,datatype,verif_parms,entry))
     if state:
         db.commit()
         response = cors_response({'code': 0, 'msg': '修改成功'})
@@ -235,6 +237,7 @@ def interfaceList():
                        "create_time": obj[12].strftime('%Y-%m-%d %H:%M:%S'),
                        "project": obj[13],
                        "datatype": obj[14],
+                       "verif_parms": obj[15],
                        })
     response = cors_response({"code": 0, "content": result})
     dbc.close()
@@ -354,6 +357,7 @@ def interfaceTaskDetail():
                        "create_time": obj[12].strftime('%Y-%m-%d %H:%M:%S'),
                        "project": obj[13],
                        "datatype": obj[14],
+                       "verif_parms": obj[15],
                        })
     response = cors_response({"code": 0, "content": result})
     dbc.close()
@@ -477,13 +481,13 @@ def cloneInterface():
     test_description = list[11]
     project = list[13]
     datatype = list[14]
+    verif_parms = list[15]
 
-    sql = 'insert into interface_list (test_name, path, method, parms,verif_code,need_save_response,need_verif_value,verif_key,verif_value_from_file,verif_value,test_description,project,datatype) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+    sql = 'insert into interface_list (test_name, path, method, parms,verif_code,need_save_response,need_verif_value,verif_key,verif_value_from_file,verif_value,test_description,project,datatype,verif_parms) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
     state = dbc.execute(sql, (
         test_name, path, method, parms, verif_code, need_save_response, need_verif_value, verif_key,
         verif_value_from_file,
-        verif_value,test_description,project,datatype))
-
+        verif_value,test_description,project,datatype,verif_parms))
 
     if state:
         db.commit()
@@ -594,7 +598,7 @@ def getAutocompleteWords():
     if len(list) == 0:
         dbc.close()
         db.close()
-        response = cors_response({"code": 0, "msg": "还没有保存的返回值"})
+        response = cors_response({"code": 0, "msg": "还没有保存的返回值","content": [{"label": "暂无保存数据的用例"}]})
         return response
     db.commit()
     result = []

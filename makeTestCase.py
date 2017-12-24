@@ -28,24 +28,35 @@ class {save_file_name} (unittest.TestCase):
         need_save_responseData = 1
         url = {base_host} + {path}
         values = {parms}
-        responsedata = HttpUntil.{method}(url,values,'')
-        code = int(responsedata['code'])
+        (responsedata,code) = HttpUntil.{method}(url,values,'')
+        verif_parms = {verif_parms}
         if need_verif_value == {need_verif_value}:
-            if code == {code}:
-                if common.verif_value_with_key(responsedata,"{verif_key}", {verif_value}):
-                    if need_save_responseData == {need_save_responseData}:
-                        common.saveToFile(responsedata,"{save_file_name}")
-                        time.sleep(3)
-                    common.logInfo(responsedata)
-                else:
-                    common.logInfo('Verif failed!')
-                    common.logInfo(responsedata)
-                    raise False
+            if code <300:
+                new_verif_parms = verif_parms.split('], [')
+                for item in new_verif_parms:
+                    item = item.replace("'","")
+                    item = item.split(', ')
+                    verif_value = item[1]
+                    if (item[2] == '1'):
+                        _verif_value = common.get_value_from_key(verif_value)
+                    else:
+                        _verif_value = verif_value
+                    
+                    if common.verif_value_with_key(responsedata, item[0], _verif_value):
+                        common.logInfo('Verif pass!')
+                    else:
+                        common.logInfo('Verif failed!')
+                        common.logInfo(responsedata)
+                        raise False
+                if need_save_responseData == {need_save_responseData}:
+                    common.saveToFile(responsedata, "{save_file_name}")
+                    time.sleep(3)
+                common.logInfo(responsedata)
             else:
                 common.logInfo(responsedata)
                 raise False
         else:
-            if code == {code} :
+            if code < 300:
                 if need_save_responseData == {need_save_responseData}:
                     common.saveToFile(responsedata,"{save_file_name}")
                     time.sleep(3)
@@ -108,7 +119,7 @@ if os.path.exists(tdresult):
     fp.close()  #关闭报告文件
     url = 'http://127.0.0.1:5000/updateTaskStatus'
     values = {task_id}
-    responsedata = HttpUntil.post(url, values, '')
+    (responsedata,code) = HttpUntil.post(url, values, '')
     if responsedata['code'] == 0:
         common.logInfo('-------------run case over--------------')
 
@@ -125,7 +136,7 @@ else:
     fp.close()  #关闭报告文件
     url = 'http://127.0.0.1:5000/updateTaskStatus'
     values = {task_id}
-    responsedata = HttpUntil.post(url, values, '')
+    (responsedata,code) = HttpUntil.post(url, values, '')
     if responsedata['code'] == 0:
         common.logInfo('-------------run case over--------------')
 #common.Send_Mail('The interface auto test result.', filename)
@@ -151,9 +162,27 @@ def get_new_parms_data(parms_data):
     new_parms_data = new_parms_data.replace("|'", '')
     return new_parms_data
 
+# 转换校验参数数据格式
+def get_new_verif_parms_data(parms_data):
+    parms_data = parms_data
+    new_parms_data = []
+    for prams_item in parms_data:
+        cache_data = []
+        prams_item = prams_item.split(',')
+        key = str(prams_item[1])
+        value = str(prams_item[2].replace('#`#',','))
+        isValueFromFile = str(prams_item[3])
+        cache_data.append(key)
+        cache_data.append(value)
+        cache_data.append(isValueFromFile)
+        new_parms_data.append(cache_data)
+    new_parms_data = '{new_parms_data}'.format(new_parms_data=new_parms_data)
+    new_parms_data = new_parms_data.replace("[[", '"')
+    new_parms_data = new_parms_data.replace("]]", '"')
+    return new_parms_data
 
 # 生成测试脚本
-def make_py_file(test_case, case_name, new_parms_data, verif_value, path, method, code, need_verif_value,
+def make_py_file(test_case, case_name, new_parms_data,new_verif_parms_data,verif_value, path, method, code, need_verif_value,
                  verif_value_from_file, verif_key, need_save_responseData,task_id,base_host):
     if verif_value_from_file == '1':
         _verif_value = 'common.get_value_from_key("' + verif_value + '")'
@@ -162,6 +191,7 @@ def make_py_file(test_case, case_name, new_parms_data, verif_value, path, method
     test_case = test_case.format(
         path='"' + path + '"',
         parms=new_parms_data,
+        verif_parms=new_verif_parms_data,
         method=method,
         code=code,
         need_verif_value=need_verif_value,
@@ -177,7 +207,6 @@ def make_py_file(test_case, case_name, new_parms_data, verif_value, path, method
 def loop_make_file(case_data,run_case_data,task_id,base_host):
     run_case_data = run_case_data.format(task_id='{"taskId":'+task_id+',"state": "3",}')
     common.saveRunPy(run_case_data, 'run_case',task_id)
-    #common.saveToFileAsPy("__author__ = 'jian.chen'", '__init__' )
     for case in case_data:
         # 用例名称
         case_name = case['test_name']
@@ -192,7 +221,6 @@ def loop_make_file(case_data,run_case_data,task_id,base_host):
             new_parms_data = get_new_parms_data(parms_data)
         except:
             new_parms_data = '""'
-
         # 是否保存返回值：1保存
         need_save_responseData = case['need_save_response']
         # 验证服务端返回值code
@@ -205,8 +233,15 @@ def loop_make_file(case_data,run_case_data,task_id,base_host):
         verif_value_from_file = case['verif_value_from_file']
         # 验证值
         verif_value = case['verif_value']
+        # 模拟数据库返回参数
+        try:
+            verif_parms_data = case['verif_parms'].split("|~|")
+            # 轮询数据参数并格式化处理
+            new_verif_parms_data = get_new_verif_parms_data(verif_parms_data)
+        except:
+            new_verif_parms_data = '""'
 
-        make_py_file(test_case, case_name, new_parms_data, verif_value, path, method, code, need_verif_value,
+        make_py_file(test_case, case_name, new_parms_data, new_verif_parms_data, verif_value, path, method, code, need_verif_value,
                      verif_value_from_file, verif_key, need_save_responseData,task_id,base_host)
 
 newParser = argparse.ArgumentParser();
@@ -225,9 +260,9 @@ entry = args.case_entry
 task_id = args.task_id
 base_host = args.base_host
 
-# entry = '66'
-# task_id = '27'
-# base_host = 'http://app.made-in-china.com'
+# entry = '22'
+# task_id = '14'
+# base_host = 'http://app.xyz.cn'
 
 #开始生成脚本
 url = 'http://127.0.0.1:5000/interfaceList'
@@ -235,7 +270,7 @@ values = {
     #"entry": args.case_entry,
     "entry": entry,
 }
-responsedata = HttpUntil.post(url, values, '')
+(responsedata,code) = HttpUntil.post(url, values, '')
 if responsedata['code'] == 0:
     case_date = responsedata['content']
     loop_make_file(case_date,old_run_case_data, task_id,base_host)

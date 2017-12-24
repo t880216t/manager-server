@@ -1,7 +1,13 @@
 # -*- coding:utf-8 -*-
+import re
+
 __author__ = 'chenjian'
 
 import time, os, sys,json,requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import datetime
 
 def createFile(name):
     day = time.strftime('%Y-%m-%d', time.localtime(time.time()))
@@ -107,13 +113,18 @@ def loadFilePath(fileName):
         else:
             print ("Error: has not file ,please check it on "+cookiefile)
             return None
-
+#返回json
 def loadFileData(fileName):
     fp = loadFilePath(fileName)
     data = open(fp).read()
     data = json.loads(data)
     return data
 
+#返回字符串
+def loadStrFileData(fileName):
+    fp = loadFilePath(fileName)
+    data = open(fp).read()
+    return data
 
 # 获取用户指定响应字段值，与设定值对比
 def verif_value_with_key(responseData, verif_key, verif_value):
@@ -126,29 +137,74 @@ def verif_value_with_key(responseData, verif_key, verif_value):
         if key == '0':
             key = 0
         need_data = need_data[key]
-    if need_data == verif_value:
+    if str(need_data) == verif_value:
         return True
     else:
-        logInfo(need_data+'|'+verif_value)
+        logInfo(str(need_data)+'|'+verif_value)
         return False
 
 #获取用户输入的val路径拉取保存文件中的值
 def get_value_from_key(key):
     input_data = key
     a = input_data.split(".")
-    b = a[0]
-    data = loadFileData(b)
-    c = len(a)
-    need_data = data
-    for i in range(1,c):
-        key = a[i]
-        if key == '0':
-            key = 0
-        need_data = need_data[key]
-    return need_data
+    if a[0]=="$":
+        data = loadStrFileData(a[1])
+        need_data = re.findall(r'"%s": (.+?),'%a[2],data)
+        if len(need_data) == 0:
+            need_data = re.findall(r'"%s": (.+?)}'%a[2], data)
+        if len(a)==4:
+            i = int(a[3])
+            need_data = need_data[i]
+            return need_data
+        return need_data[0]
+    else:
+        b = a[0]
+        data = loadFileData(b)
+        c = len(a)
+        need_data = data
+        for i in range(1,c):
+            key = a[i]
+            if key == '0':
+                key = 0
+            if key == '1':
+                key = 1
+            need_data = need_data[key]
+        return need_data
 
 #带时间log打印
 def logInfo(str):
     #lineNumber = sys._getframe().f_back.f_lineno  # 获取行号
     logtime =  time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     print logtime,str
+
+# 发送邮件
+def Send_Mail(Message, path):
+    msg = MIMEMultipart()
+    TODAY = datetime.date.today()
+    CURRENTDAY = TODAY.strftime('%Y-%m-%d')
+    att = MIMEText(open(path, 'rb').read(), 'base64', 'utf-8')  # 设置附件的目录
+    att['content-type'] = 'application/octet-stream'
+    att['content-disposition'] = 'attachment;filename="%s result.html"'%CURRENTDAY  # 设置附件的名称
+    msg.attach(att)
+
+    content = str(Message)  # 正文内容
+    body = MIMEText(content, 'plain', 'utf-8')  # 设置字符编码
+    msg.attach(body)
+    msgto = ['xxx@xxx.com']  # 收件人地址多个联系人，格式['aa@163.com'; 'bb@163.com']
+    msgfrom = 'xxx@xxx.com'  # 寄信人地址 ,
+    msg['subject'] = CURRENTDAY + '接口自动化测试报告'  # 主题
+    msg['From'] = u'xxxx <%s>'%msgfrom # 主题
+    msg['date'] = time.ctime()  # 时间
+    # msg['Cc']='bb@junbao.net' #抄送人地址 多个地址不起作用
+
+    mailuser = 'xxx@xxx.com'  # 用户名
+    mailpwd = 'xxxxxxx'  # 密码
+    try:
+        smtp = smtplib.SMTP()
+        smtp.connect(r'imap.xxx.com')  # smtp设置
+        smtp.login(mailuser, mailpwd)  # 登录
+        smtp.sendmail(msgfrom, msgto, msg.as_string())  # 发送
+        smtp.close()
+        print "success mail"
+    except Exception, e:
+        print e

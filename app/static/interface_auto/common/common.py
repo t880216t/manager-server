@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+import re
+
 __author__ = 'chenjian'
 
 import time, os, sys,json,requests
@@ -111,13 +113,18 @@ def loadFilePath(fileName):
         else:
             print ("Error: has not file ,please check it on "+cookiefile)
             return None
-
+#返回json
 def loadFileData(fileName):
     fp = loadFilePath(fileName)
     data = open(fp).read()
     data = json.loads(data)
     return data
 
+#返回字符串
+def loadStrFileData(fileName):
+    fp = loadFilePath(fileName)
+    data = open(fp).read()
+    return data
 
 # 获取用户指定响应字段值，与设定值对比
 def verif_value_with_key(responseData, verif_key, verif_value):
@@ -130,29 +137,39 @@ def verif_value_with_key(responseData, verif_key, verif_value):
         if key == '0':
             key = 0
         need_data = need_data[key]
-        print need_data
-    if need_data == verif_value:
+    if str(need_data) == verif_value:
         return True
     else:
-        logInfo(need_data+'|'+verif_value)
+        logInfo(str(need_data)+'|'+verif_value)
         return False
 
 #获取用户输入的val路径拉取保存文件中的值
 def get_value_from_key(key):
     input_data = key
     a = input_data.split(".")
-    b = a[0]
-    data = loadFileData(b)
-    c = len(a)
-    need_data = data
-    for i in range(1,c):
-        key = a[i]
-        if key == '0':
-            key = 0
-        if key == '1':
-            key = 1
-        need_data = need_data[key]
-    return need_data
+    if a[0]=="$":
+        data = loadStrFileData(a[1])
+        need_data = re.findall(r'"%s": (.+?),'%a[2],data)
+        if len(need_data) == 0:
+            need_data = re.findall(r'"%s": (.+?)}'%a[2], data)
+        if len(a)==4:
+            i = int(a[3])
+            need_data = need_data[i]
+            return need_data
+        return need_data[0]
+    else:
+        b = a[0]
+        data = loadFileData(b)
+        c = len(a)
+        need_data = data
+        for i in range(1,c):
+            key = a[i]
+            if key == '0':
+                key = 0
+            if key == '1':
+                key = 1
+            need_data = need_data[key]
+        return need_data
 
 #带时间log打印
 def logInfo(str):

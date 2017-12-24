@@ -24,12 +24,13 @@ def post(url,parms,headers):
         req = urllib2.Request(url, data,headers)
     try:
         response = urllib2.urlopen(req)
+        code = response.code
         responsedata = response.read()
         responsedata = json.loads(responsedata)
-        return responsedata
+        return responsedata,code
     except Exception, e:
         print e
-        return None
+        return None,e.code
 
 
 """
@@ -50,15 +51,16 @@ def post_and_save_cookie(url,parms,headers):
 
     try:
         response = opener.open(req)
+        code = response.code
         responsedata = response.read()
         responsedata = json.loads(responsedata)
         c.save(ignore_expires=True, ignore_discard=True)
         time.sleep(3)
-        return responsedata
+        return responsedata,code
 
     except Exception, e:
         print e
-        return None
+        return None,e.code
 
 """
 POST with cookie , make sure has the cookie first.
@@ -81,34 +83,45 @@ def post_with_cookie(url,parms,headers):
 
     try:
         response = opener.open(req)
+        code = response.code
         responsedata = response.read()
         responsedata = json.loads(responsedata)
-        return responsedata
+        return responsedata,code
 
     except Exception, e:
         print e
-        return None
+        return None,e.code
 
 """
 GET
 """
-def get(url):
-    req = urllib2.Request(url)
+def get(url,parms,headers):
+    try:
+        data = urllib.urlencode(parms)
+    except:
+        data = parms
+    req = urllib2.Request(url,data)
     try:
         response = urllib2.urlopen(req)
+        code = response.code
         responsedata = response.read()
         responsedata = json.loads(responsedata)
-        return responsedata
+        return responsedata,code
     except Exception,e:
         print e
-        return None
+        return None,e.code
 
 
 """
 post file
 """
 def post_file(url,files):
-    response = requests.post(url, files=files)
-    _response = response.content
-    responsedata = json.loads(_response)
-    return responsedata
+    try:
+        response = requests.post(url, files=files)
+        code = response.code
+        _response = response.content
+        responsedata = json.loads(_response)
+        return responsedata,code
+    except Exception, e:
+        print e
+        return None,e.code
