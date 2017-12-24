@@ -41,6 +41,7 @@ CREATE TABLE `interface_list` (
   `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `project` varchar(255) DEFAULT NULL,
   `datatype` varchar(255) DEFAULT NULL,
+  `verif_parms` varchar(2000) DEFAULT NULL,
   PRIMARY KEY (`entry`)
 ) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8;
 
