@@ -175,7 +175,10 @@ def get_value_from_key(key):
 def logInfo(str):
     #lineNumber = sys._getframe().f_back.f_lineno  # 获取行号
     logtime =  time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    print logtime,str
+    try:
+        print logtime, json.dumps(str).decode('unicode-escape')
+    except:
+        print logtime,str
 
 # 发送邮件
 def Send_Mail(Message, path):
