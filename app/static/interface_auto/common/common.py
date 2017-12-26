@@ -151,7 +151,11 @@ def get_value_from_key(key):
         data = loadStrFileData(a[1])
         need_data = re.findall(r'"%s": (.+?),'%a[2],data)
         if len(need_data) == 0:
+            need_data = re.findall(r'"%s": "(.+?)"}'%a[2], data)
+        if len(need_data) == 0:
             need_data = re.findall(r'"%s": (.+?)}'%a[2], data)
+        if len(need_data) == 0:
+            need_data = re.findall(r'"%s": (.+?),'%a[2], data)
         if len(a)==4:
             i = int(a[3])
             need_data = need_data[i]
