@@ -36,7 +36,7 @@ def doSth(taskId):
     values = {
         "entry": taskId,
     }
-    responsedata = HttpUntil.post(url, values, '')
+    (responsedata,code) = HttpUntil.post(url, values, '')
     if responsedata:
         if responsedata['code'] == 0:
             common.logInfo( 'run and build settime task:'+str(taskId))
