@@ -1,6 +1,6 @@
 # -*-coding:utf-8-*-
 import argparse,sys
-import os
+import os,time
 from threading import Thread
 
 from app.static.interface_auto.common import common
@@ -147,16 +147,22 @@ sys.exit(0)
 def get_new_parms_data(parms_data):
     parms_data = parms_data
     new_parms_data = {}
+    now = time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
     for prams_item in parms_data:
         prams_item = prams_item.split(',')
         key = str(prams_item[1])
-        value = str(prams_item[2].replace('#`#',','))
-        value_path = str(prams_item[4].replace('#`#',','))
+        value = str(prams_item[2].replace('#`#', ','))
+        value_path = str(prams_item[4].replace('#`#', ','))
         isValueFromFile = str(prams_item[3])
         if isValueFromFile == "1":
             new_parms_data[key] = '|common.get_value_from_key("' + value_path + '")|'
         else:
-            new_parms_data[key] = value
+            if value == 'now_email':
+                new_parms_data[key] = now + '@test.test'
+            elif value == 'now':
+                new_parms_data[key] = now
+            else:
+                new_parms_data[key] = value
     new_parms_data = '{new_parms_data}'.format(new_parms_data=new_parms_data)
     new_parms_data = new_parms_data.replace("'|", '')
     new_parms_data = new_parms_data.replace("|'", '')
