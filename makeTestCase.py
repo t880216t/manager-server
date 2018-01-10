@@ -139,7 +139,9 @@ else:
     (responsedata,code) = HttpUntil.post(url, values, '')
     if responsedata['code'] == 0:
         common.logInfo('-------------run case over--------------')
-#common.Send_Mail('The interface auto test result.', filename)
+reuslt_file = open(filename)
+result_data = reuslt_file.read()
+common.Send_Mail(result_data, filename)
 sys.exit(0)
 """
 
