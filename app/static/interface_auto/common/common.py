@@ -195,7 +195,8 @@ def Send_Mail(Message, path):
     msg.attach(att)
 
     content = str(Message)  # 正文内容
-    body = MIMEText(content, 'plain', 'utf-8')  # 设置字符编码
+    # body = MIMEText(content, 'plain', 'utf-8')  # 设置字符编码
+    body = MIMEText(content, 'html', 'utf-8')  # 设置字符编码
     msg.attach(body)
     msgto = ['xxx@xxx.com']  # 收件人地址多个联系人，格式['aa@163.com'; 'bb@163.com']
     msgfrom = 'xxx@xxx.com'  # 寄信人地址 ,
