@@ -286,7 +286,7 @@ def interfaceTaskList():
     dbc.execute('SET NAMES utf8;')
     dbc.execute('SET CHARACTER SET utf8;')
     dbc.execute('SET character_set_connection=utf8;')
-    sql = 'select * from interface_task_list'
+    sql = 'select * from interface_task_list ORDER by create_time desc'
     dbc.execute(sql)
     list = dbc.fetchall()
     if len(list) == 0:
