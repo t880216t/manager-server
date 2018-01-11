@@ -629,6 +629,15 @@ def register():
         dbc.execute('SET NAMES utf8;')
         dbc.execute('SET CHARACTER SET utf8;')
         dbc.execute('SET character_set_connection=utf8;')
+        
+        verif_sql = 'select * from users WHERE username = %s'
+        dbc.execute(verif_sql, (username,))
+        verif_list = dbc.fetchone()
+        if verif_list != None:
+            dbc.close()
+            db.close()
+            response = cors_response({"code": 10001, "msg": "用户登录名重复"})
+            return response
 
         hash_password, salt = encrypt_password(password)
         dbc.execute('INSERT INTO users (username,hash_password,salt,email) VALUES (%s,%s,%s,%s)',
