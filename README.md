@@ -17,3 +17,18 @@ $pip install -r requirements.txt
 其中有mysql-db可以再这里下载：https://sourceforge.net/projects/mysql-python/?source=directory
 如果对应的版本不对请百度找下。
 
+## 数据库结构导入
+
+安装MYSQL，新建个库。
+数据库工具导入文件‘tables.sql’。
+
+##服务端配置数据库
+
+编辑文件‘manager-server/app/database_config.py’
+``` bash
+database_host = "127.0.0.1"#你的数据库地址
+database_username = "root"#数据库的登录账号
+database_password = "root"#数据库的登录账号
+database1 = "1"#放项目数据的数据库名
+database2 = "2"#不用配置
+```
