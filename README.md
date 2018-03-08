@@ -32,3 +32,11 @@ database_password = "root"#数据库的登录账号
 database1 = "1"#放项目数据的数据库名
 database2 = "2"#不用配置
 ```
+
+## 服务端启动
+
+本项目根目录
+``` bash
+$python run.py
+```
+默认的地址：http://127.0.0.1:5000/
