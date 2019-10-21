@@ -13,4 +13,4 @@ MySQL-python==1.2.5
 requests==2.18.4
 supervisor==3.3.3
 urllib3==1.22
-Werkzeug==0.12.2
+Werkzeug==0.15.3
